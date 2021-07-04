@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import datetime
+import random
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -10,15 +12,15 @@ from tgbot.config import load_config
 from tgbot.filters.admin import AdminFilter
 from tgbot.handlers.admin import register_admin
 from tgbot.handlers.echo import register_echo
-from tgbot.handlers.user import register_user
+from tgbot.handlers.user import (
+    register_user,
+    register_user_follow_race,
+    redister_searh_results,
+)
 from tgbot.middlewares.db import DbMiddleware
 from tgbot.models.sqlitedb import (
     create_tables,
-    add_race,
-    add_user,
-    set_race_followed,
-    get_all_races,
-    get_current_date_races,
+    update_copernico_db,
 )
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,8 @@ def register_all_filters(dp):
 def register_all_handlers(dp):
     register_admin(dp)
     register_user(dp)
+    register_user_follow_race(dp)
+    redister_searh_results(dp)
 
     register_echo(dp)
 
@@ -61,16 +65,12 @@ async def main():
     register_all_filters(dp)
     register_all_handlers(dp)
 
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(update_copernico_db, "interval", seconds=30)
+    scheduler.start()
     # start
     try:
         await create_tables()
-        await add_user(user_id=12345, user_name="asf")
-        await set_race_followed(12345, "5555")
-        await add_race(
-            race_id="--123", race_title="Гонка", race_date=datetime.date(2021, 6, 30)
-        )
-        await get_all_races()
-        await get_current_date_races(datetime.date(2021, 6, 30))
         await dp.start_polling()
     finally:
         await dp.storage.close()
@@ -79,6 +79,7 @@ async def main():
 
 
 if __name__ == "__main__":
+
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
