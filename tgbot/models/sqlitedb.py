@@ -1,14 +1,18 @@
+from aiogram.utils.callback_data import CallbackData
+from pandas.core.reshape.concat import concat
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, BigInteger
 from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.sql.base import Executable
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import Boolean, Date, DateTime, Time
 import datetime
 import pandas as pd
 import numpy as np
-import requests
+from tgbot.config import load_config
 
+config = load_config(".env")
 engine = create_engine("sqlite:///tgbot/data/copernico.db")
 
 Base = declarative_base()
@@ -92,13 +96,24 @@ async def set_race_followed(user_id, race_id):
 
 
 async def add_race(race_id, race_title, race_date):
-    ses.add(Race(race_id=race_id, race_title=race_title, race_date=race_date))
+    try:
+        ses.add(Race(race_id=race_id, race_title=race_title, race_date=race_date))
+        ses.commit()
+        return "Мероприятие успешно добавлено в БД\nВот список активных мероприятий"
+    except Exception as e:
+        ses.rollback()
+        return "Мероприятие с таким id уже есть в БД"
+
+
+async def delete_race(id):
+    ses.query(Race).filter(Race.race_id == id).delete(synchronize_session=False)
     ses.commit()
+    return "Мероприятие было удалено"
 
 
 async def get_all_races():
-    q = ses.query(Race.race_id, Race.race_title, Race.is_running, Race.race_date).all()
-    print(q)  # TODO заменить на return для хэндлера
+    q = ses.query(Race.race_id, Race.race_title, Race.race_date).all()
+    return q
 
 
 async def get_current_date_races(date: datetime.date):
@@ -145,7 +160,7 @@ async def update_copernico_db():
     frames = []
     for race in running_races:
         race_id = race[0]
-        COPERNICO_API = f"https://public-api.copernico.cloud/api/races/{race_id}/preset/au@cronosport.ru:::test101"
+        COPERNICO_API = f"https://public-api.copernico.cloud/api/races/{race_id}/preset/{config.copernico.email}:::{config.copernico.preset_main}"
         df = pd.read_json(COPERNICO_API)
         df["race_id"] = pd.Series(None)
         df["race_id"] = df["race_id"].fillna(race_id)
@@ -198,7 +213,6 @@ async def update_copernico_db():
 
 
 async def find_entry(race_id, bib_or_surname):
-    # TODO создать запрос вытаскивающий запись по dorsal и race_id
     try:
         int(bib_or_surname)
         q = (
@@ -207,6 +221,7 @@ async def find_entry(race_id, bib_or_surname):
                 CopernicoData.name,
                 CopernicoData.surname,
                 CopernicoData.time_real,
+                CopernicoData.category,
             )
             .filter(
                 CopernicoData.race_id == race_id,
@@ -214,7 +229,6 @@ async def find_entry(race_id, bib_or_surname):
             )
             .all()
         )
-        print(type(q))
         return q
 
     except ValueError:
@@ -224,10 +238,11 @@ async def find_entry(race_id, bib_or_surname):
                 CopernicoData.name,
                 CopernicoData.surname,
                 CopernicoData.time_real,
+                CopernicoData.category,
             )
             .filter(
                 CopernicoData.race_id == race_id,
-                CopernicoData.surname == bib_or_surname,
+                CopernicoData.surname == bib_or_surname.capitalize(),
             )
             .all()
         )
@@ -262,8 +277,8 @@ def _birthdate_to_date(birthdate):
         datetime.date(1900, 1, 1)
 
 
-async def delete_race_data_from_db(race_id):
-    ses.query(CopernicoData).filter(CopernicoData.race_id == race_id).delete(
-        synchronize_session="fetch"
-    )
-    ses.commit()
+# async def delete_race_data_from_db(race_id):
+#     ses.query(CopernicoData).filter(CopernicoData.race_id == race_id).delete(
+#         synchronize_session="fetch"
+#     )
+#     ses.commit()

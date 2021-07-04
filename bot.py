@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import datetime
-import random
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from aiogram import Bot, Dispatcher
@@ -10,7 +8,12 @@ from aiogram.contrib.fsm_storage.redis import RedisStorage
 
 from tgbot.config import load_config
 from tgbot.filters.admin import AdminFilter
-from tgbot.handlers.admin import register_admin
+from tgbot.handlers.admin import (
+    register_admin,
+    register_add_race_info,
+    register_get_races_list,
+    register_delete_race_from_db,
+)
 from tgbot.handlers.echo import register_echo
 from tgbot.handlers.user import (
     register_user,
@@ -37,7 +40,10 @@ def register_all_filters(dp):
 def register_all_handlers(dp):
     register_admin(dp)
     register_user(dp)
+    register_add_race_info(dp)
     register_user_follow_race(dp)
+    register_get_races_list(dp)
+    register_delete_race_from_db(dp)
     redister_searh_results(dp)
 
     register_echo(dp)

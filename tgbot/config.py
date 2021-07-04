@@ -24,9 +24,17 @@ class Miscellaneous:
 
 
 @dataclass
+class Copernico:
+    email: str
+    preset_main: str
+    preset_report_hl: str
+
+
+@dataclass
 class Config:
     tg_bot: TgBot
     db: DbConfig
+    copernico: Copernico
     misc: Miscellaneous
 
 
@@ -45,6 +53,11 @@ def load_config(path: str = None):
             password=env.str("DB_PASS"),
             user=env.str("DB_USER"),
             database=env.str("DB_NAME"),
+        ),
+        copernico=Copernico(
+            email=env.str("COPERNICO_EMAIL"),
+            preset_main=env.str("PRESET_MAIN"),
+            preset_report_hl=env.str("PRESET_REPORT_HR"),
         ),
         misc=Miscellaneous(),
     )

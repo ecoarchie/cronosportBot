@@ -13,16 +13,16 @@ from tgbot.models.sqlitedb import (
     set_race_followed,
     find_entry,
 )
-from tgbot.keyboards.inline import running_races_kb
+from tgbot.keyboards.inline import races_kb
 
 
 async def user_start(message: Message):
     races = await get_running_races()
-    kb = running_races_kb(races)
+    kb = races_kb(races, "view")
     await get_or_add_user(message.from_user.id, message.from_user.username)
     await message.answer(
         f"Привет, {message.from_user.username}!\n\n \
-    Для начала выбери мероприятие:",
+Для начала выбери мероприятие:",
         reply_markup=kb,
     )
 
@@ -32,10 +32,10 @@ def register_user(dp: Dispatcher):
 
 
 async def user_follow_race(call: CallbackQuery, callback_data: dict):
-    await set_race_followed(call.from_user.id, callback_data.get("race_id"))
+    await set_race_followed(call.from_user.id, callback_data.get("id"))
     await call.answer()
-    race_title = callback_data.get("race_title")
-    race_date = callback_data.get("race_date")
+    race_title = callback_data.get("title")
+    race_date = callback_data.get("date")
     await call.message.answer(
         f"Отлично, ты выбрал мероприятие '{race_title} {race_date}'\n"
         "Теперь ты можешь следующее:"
@@ -44,15 +44,27 @@ async def user_follow_race(call: CallbackQuery, callback_data: dict):
 
 
 def register_user_follow_race(dp: Dispatcher):
-    dp.register_callback_query_handler(user_follow_race, race_callback.filter())
+    dp.register_callback_query_handler(
+        user_follow_race, race_callback.filter(action="view")
+    )
 
 
 async def search_results(message: Message):
     user = await get_or_add_user(message.from_user.id, message.from_user.username)
 
     answer_message = await find_entry(user[1], message.text)
-    for entry in answer_message:
-        await message.answer(entry)
+    if len(answer_message) == 0:
+        await message.answer(
+            "Атлета/команды с таким номером нет. Попробуй другой номер"
+        )
+    else:
+        for entry in answer_message:
+            await message.answer(
+                f"Стартовый номер: {entry.dorsal}\n\
+{entry.name} {entry.surname}\n\
+Чистое время: {entry.time_real}\n\
+Категория: {entry.category}"
+            )
 
 
 def redister_searh_results(dp: Dispatcher):
