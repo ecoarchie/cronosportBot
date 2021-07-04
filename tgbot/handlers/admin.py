@@ -1,6 +1,6 @@
 from logging import warning
 from aiogram import Dispatcher
-from aiogram.types import Message, message
+from aiogram.types import Message
 from aiogram.types.callback_query import CallbackQuery
 from tgbot.models.sqlitedb import (
     add_race,

@@ -1,12 +1,8 @@
 import logging
 from aiogram import Dispatcher
-from aiogram.dispatcher import filters
-from aiogram.types import Message, User
-from aiogram.types import callback_query
+from aiogram.types import Message
 from aiogram.types.callback_query import CallbackQuery
-from aiogram.utils.callback_data import CallbackData
 from tgbot.keyboards.callback_data import race_callback
-from sqlalchemy.sql.sqltypes import DateTime
 from tgbot.models.sqlitedb import (
     get_or_add_user,
     get_running_races,

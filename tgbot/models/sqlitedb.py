@@ -1,12 +1,9 @@
-from aiogram.utils.callback_data import CallbackData
-from pandas.core.reshape.concat import concat
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, BigInteger
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.sql.base import Executable
 from sqlalchemy.sql.schema import ForeignKey
-from sqlalchemy.sql.sqltypes import Boolean, Date, DateTime, Time
+from sqlalchemy.sql.sqltypes import Date, DateTime, Time
 import datetime
 import pandas as pd
 import numpy as np
