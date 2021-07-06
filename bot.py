@@ -27,6 +27,8 @@ from tgbot.models.sqlitedb import (
 )
 
 logger = logging.getLogger(__name__)
+scheduler = AsyncIOScheduler()
+scheduler.add_job(update_copernico_db, "interval", seconds=30)
 
 
 def register_all_middlewares(dp):
@@ -71,8 +73,6 @@ async def main():
     register_all_filters(dp)
     register_all_handlers(dp)
 
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(update_copernico_db, "interval", seconds=30)
     scheduler.start()
     # start
     try:
