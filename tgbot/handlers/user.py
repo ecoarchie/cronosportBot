@@ -34,7 +34,7 @@ async def user_follow_race(call: CallbackQuery, callback_data: dict):
     race_date = callback_data.get("date")
     await call.message.answer(
         f"Отлично, ты выбрал мероприятие '{race_title} {race_date}'\n"
-        "Теперь ты можешь следующее:"
+        "Теперь ты можешь следующее:\n"
         "1. Искать участника/команду по номеру манишки или по фамилии"
     )
 
@@ -49,6 +49,7 @@ async def search_results(message: Message):
     user = await get_or_add_user(message.from_user.id, message.from_user.username)
 
     answer_message = await find_entry(user[1], message.text)
+    print(answer_message)
     if len(answer_message) == 0:
         await message.answer(
             "Атлета/команды с таким номером нет. Попробуй другой номер"
